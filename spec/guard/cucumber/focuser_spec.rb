@@ -80,8 +80,8 @@ RSpec.describe Guard::Cucumber::Focuser do
         expect(File).to receive(:open).with(path, "r").and_yield(file)
       end
 
-      it "returns an array of line numbers" do
-        expect(focuser.scan_path_for_focus_tag(path, focus_tag)).to eql([1, 6])
+      it "returns an array of file names with line numbers" do
+        expect(focuser.scan_path_for_focus_tag(path, focus_tag)).to eql(["#{path}:1:6"])
       end
     end
 
@@ -107,12 +107,26 @@ RSpec.describe Guard::Cucumber::Focuser do
     end
 
     context "file that is a directory" do
-      before do
-        expect(File).to receive(:directory?).with(dir).and_return(true)
+      let(:file) do
+        StringIO.new <<-EOS
+          @focus
+          Scenario: Foo
+          Given bar
+          Scenario: Bar
+          Given lorem
+          Scenario: Ipsum
+          Given dolor
+        EOS
       end
 
-      it "returns an empty array" do
-        expect(focuser.scan_path_for_focus_tag(dir, focus_tag)).to eql([])
+      before do
+        expect(File).to receive(:directory?).with(dir).and_return(true)
+        expect(Dir).to receive(:glob).with("#{dir}/**/*.feature").and_return([path])
+        expect(File).to receive(:open).with(path, "r").and_yield(file)
+      end
+
+      it "returns an array of file names with line numbers" do
+        expect(focuser.scan_path_for_focus_tag(dir, focus_tag)).to eql(["#{path}:1"])
       end
     end
 
@@ -123,14 +137,6 @@ RSpec.describe Guard::Cucumber::Focuser do
         expect(File).not_to receive(:open).with(path, "r")
         expect(focuser.scan_path_for_focus_tag(path, focus_tag)).to eql([])
       end
-    end
-  end
-
-  describe ".append_line_numbers_to_path" do
-    it "returns a path with line numbers appended" do
-      line_numbers = [1, 2]
-      returned_path = focuser.append_line_numbers_to_path(line_numbers, path)
-      expect(returned_path).to eql(path + ":1:2")
     end
   end
 end

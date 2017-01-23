@@ -97,7 +97,7 @@ keep_failed: false                # Keep failed features until they pass
 run_all: {cmd_additional_args: "--format pretty"}              # Override any option when running all specs
                                   # default: {}
 
-focus_on: 'dev'                   # Focus on scenarios tagged with '@dev'
+focus_on: '@dev'                  # Focus on scenarios tagged with '@dev'
                                   # If '@dev' is on line 6 in 'foo.feature',
                                   # this example runs: 'bundle exec cucumber foo.feature:6'
                                   # default: nil

@@ -10,7 +10,7 @@ cucumber_options = {
   # feature_sets: ['features/frontend', 'features/experimental'],
 
   # run_all: { cmd_additional_args: '--profile guard_all' },
-  # focus_on: { 'wip' }, # @wip
+  # focus_on: '@wip', # @wip
   # notification: false
 }
 

@@ -28,58 +28,41 @@ module Guard
         def focus(paths, focus_tag)
           return false if paths.empty?
 
-          paths.inject([]) do |updated_paths, path|
-            focused_line_numbers = scan_path_for_focus_tag(path, focus_tag)
-
-            if focused_line_numbers.empty?
-              updated_paths << path
-            else
-              updated_paths << append_line_numbers_to_path(
-                focused_line_numbers, path
-              )
-            end
-
-            updated_paths
+          focused_paths = paths.inject([]) do |focused_lines, path|
+            focused_lines + scan_path_for_focus_tag(path, focus_tag)
           end
+          focused_paths.empty? ? paths : focused_paths
         end
 
         # Checks to see if the file at path contains the focus tag
-        # It will return an empty array if the path is a directory.
+        # It will scan all recursive entries if the path is a directory.
         #
         # @param [String] path the file path to search
         # @param [String] focus_tag the focus tag to look for in each path
-        # @return [Array<Integer>] the line numbers that include the focus tag
-        # in path
+        # @return [Array<String>] the paths with line numbers that include
+        # the focus tag in path
         #
         def scan_path_for_focus_tag(path, focus_tag)
-          return [] if File.directory?(path) || path.include?(":")
+          return [] if path.include?(":")
 
-          line_numbers = []
+          paths = File.directory?(path) ? Dir.glob("#{path}/**/*.feature") : [path]
 
-          File.open(path, "r") do |file|
-            while (line = file.gets)
-              if line.include?(focus_tag)
-                line_numbers << file.lineno
+          paths.map do |path|
+            line_numbers = scan_focus_tag(path, focus_tag)
+            line_numbers.empty? ? nil : ([path] + line_numbers).join(':')
+          end.compact
+        end
+
+        private
+
+        def scan_focus_tag(path, focus_tag)
+          [].tap do |line_numbers|
+            File.open(path, "r") do |file|
+              while (line = file.gets)
+                line_numbers << file.lineno if line.include?(focus_tag)
               end
             end
           end
-
-          line_numbers
-        end
-
-        # Appends the line numbers to the path
-        #
-        # @param [Array<Integer>] line_numbers the line numbers to append to
-        # the path
-        # @param [String] path the path that will receive the appended line
-        # numbers
-        # @return [String] the string containing the path appended with the
-        # line number
-        #
-        def append_line_numbers_to_path(line_numbers, path)
-          line_numbers.each { |num| path += ":" + num.to_s }
-
-          path
         end
       end
     end
